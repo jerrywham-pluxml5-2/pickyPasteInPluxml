@@ -5,6 +5,46 @@ Please see project page: http://sebsauvage.net/wiki/doku.php?id=php:zerobin
 */
 $VERSION='Alpha 0.19';
 if (version_compare(PHP_VERSION, '5.2.6') < 0) die('ZeroBin requires php 5.2.6 or above to work. Sorry.');
+
+function addToPluxml() {
+    define('PLX_ROOT', '../../../');
+    define('PLX_CORE', PLX_ROOT.'core/');
+    define('PLX_CONFIG_PATH', 'data/configuration/');
+    define('PLX_PLUGINS', PLX_ROOT.'plugins/');
+    define('PLX_UPDATER', true);
+    include(PLX_CORE.'lib/config.php');
+
+    # On inclut les librairies nécessaires
+    include_once(PLX_CORE.'lib/class.plx.glob.php');
+    include_once(PLX_CORE.'lib/class.plx.utils.php');
+    include_once(PLX_CORE.'lib/class.plx.motor.php');
+    include_once(PLX_CORE.'lib/class.plx.admin.php');
+    include_once(PLX_CORE.'lib/class.plx.plugins.php');
+    $plxAdmin = plxAdmin::getInstance();
+
+    # Si cryptMyPluxml est chargé
+    if (in_array('cryptMyPluxml', plxGlob::getInstance(PLX_PLUGINS, true)->aFiles)) {
+        $pickyPasteInPluxml = $plxAdmin->plxPlugins->getInstance('pickyPasteInPluxml');
+        if ($pickyPasteInPluxml->getParam('cryptMyPluxml') == 1) {
+            // Create storage directory if it does not exist.
+            if (!is_dir(PLX_ROOT.'data/zb'))
+            {
+                mkdir(PLX_ROOT.'data/zb',0705);
+                file_put_contents(PLX_ROOT.'data/zb/.htaccess',"Allow from none\nDeny from all\n", LOCK_EX);
+            }
+            define('PLX_ZB',PLX_ROOT.'data/zb/'); 
+        } else {
+            define('PLX_ZB','./data/');
+        }
+    } else {
+        define('PLX_ZB','./data/');
+    }
+}
+
+if (!defined('PLX_ZB')) {
+    addToPluxml();
+}
+
 require_once "lib/serversalt.php";
 require_once "lib/vizhash_gd_zero.php";
 
@@ -21,7 +61,7 @@ if (get_magic_quotes_gpc())
 // Will return false if IP address made a call less than 10 seconds ago.
 function trafic_limiter_canPass($ip)
 {
-    $tfilename='./data/trafic_limiter.php';
+    $tfilename=PLX_ZB.'trafic_limiter.php';
     if (!is_file($tfilename))
     {
         file_put_contents($tfilename,"<?php\n\$GLOBALS['trafic_limiter']=array();\n?>", LOCK_EX);
@@ -62,7 +102,7 @@ function slow_equals($a, $b)
 */
 function dataid2path($dataid)
 {
-    return 'data/'.substr($dataid,0,2).'/'.substr($dataid,2,2).'/';
+    return PLX_ZB.substr($dataid,0,2).'/'.substr($dataid,2,2).'/';
 }
 
 /* Convert paste id to discussion storage path.
@@ -154,10 +194,10 @@ if (!empty($_POST['data'])) // Create new paste/comment
     $error = false;
 
     // Create storage directory if it does not exist.
-    if (!is_dir('data'))
+    if (!is_dir(rtrim(PLX_ZB,'/')))
     {
-        mkdir('data',0705);
-        file_put_contents('data/.htaccess',"Allow from none\nDeny from all\n", LOCK_EX);
+        mkdir(rtrim(PLX_ZB,'/'),0705);
+        file_put_contents(PLX_ZB.'.htaccess',"Allow from none\nDeny from all\n", LOCK_EX);
     }
 
     // Make sure last paste from the IP address was more than 10 seconds ago.

@@ -42,7 +42,7 @@ html #PickyWrapper{
 	border-radius: 6px 6px 6px 6px;
 	-moz-border-radius: 6px 6px 6px 6px;
 	-webkit-border-radius: 6px 6px 6px 6px;
-	background-image:url("../img/stamp.png");
+	background-image:url("pickyPasteInPluxml/img/stamp.png");
 	background-repeat:no-repeat;
 	background-color: rgba(137, 148, 160, 0.5);
 }

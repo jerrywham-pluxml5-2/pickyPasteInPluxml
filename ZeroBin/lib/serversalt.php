@@ -25,7 +25,7 @@ function generateRandomSalt()
 */
 function getServerSalt()
 {
-    $saltfile = 'data/salt.php';
+    $saltfile = PLX_ZB.'salt.php';
     if (!is_file($saltfile))
         file_put_contents($saltfile,'<?php /* |'.generateRandomSalt().'| */ ?>',LOCK_EX);
     $items=explode('|',file_get_contents($saltfile));

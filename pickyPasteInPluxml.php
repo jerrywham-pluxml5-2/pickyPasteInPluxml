@@ -1,27 +1,30 @@
 <?php
-	# PickyPaste 1.0
-	# > For Picky People (aka I want it robust AND easy-to-use)
-
-	# @author: JeromeJ (webmaster of http://www.olissea.com/ )
-	# @licence: DoWhatTheFuckYouWantAsLongAsYouGiveMeSomeCredits(Plz)
-
-	# Based on Zerobin's encryption code
-
-	# NOTE: - Best used with the snippet
-	#        - Best used in offline-mode
-
-	# DESIGN BY iamyog and nabellaleen
-
-	# TODO:
-	# - Allow multiple recipient?
-	# - Create a local version of the HTML client, configurable through an optionnal external config file (an .ini file ?)
-	# - Create two versions: A standalone PHP and a client/server version.
-	#     -> The client/server version could simple have a client sending data to the standalone PHP version.
-	#    -> Additionnaly, for the people who DONT want people being able to use the standalone PHP version, there could be a light PHP version (no form, only the 'mailServer')
-	# - What if they don't want to send it by email? Wouldn't it be easier for them if they had only one tool to use? -> Make it modulable!
-
-	#################### CONFIG ####################################
-
+/**
+ * Plugin pickyPasteInPluxml
+ *
+ *    based on PickyPaste 1.0
+ *    > For Picky People (aka I want it robust AND easy-to-use)
+ *
+ *    @author: JeromeJ (webmaster of http://www.olissea.com/ )
+ *    @licence: DoWhatTheFuckYouWantAsLongAsYouGiveMeSomeCredits(Plz)
+ *
+ *    Based on Zerobin's encryption code
+ *
+ *    NOTE: - Best used with the snippet
+ *           - Best used in offline-mode
+ *
+ *    DESIGN BY iamyog and nabellaleen
+ *
+ *    TODO:
+ *    - Allow multiple recipient?
+ *    - Create a local version of the HTML client, configurable through an optionnal external config file (an .ini file ?)
+ *    - Create two versions: A standalone PHP and a client/server version.
+ *        -> The client/server version could simple have a client sending data to the standalone PHP version.
+ *       -> Additionnaly, for the people who DONT want people being able to use the standalone PHP version, there could be a light PHP version (no form, only the 'mailServer')
+ *    - What if they don't want to send it by email? Wouldn't it be easier for them if they had only one tool to use? -> Make it modulable!
+ *
+ *   ################### CONFIG ####################################
+*/
 	error_reporting(-1);
 	mb_internal_encoding('UTF-8');
 
@@ -34,7 +37,12 @@
 
 	# 5.3: namespaces
 	# define('PP_REQUIRED_PHP_VERSION', '5.3.0'); # I'd like to eventually switch to 5.3, be warned.
-
+/**
+ *
+ * @version	1.1
+ * @date	21/05/2014
+ * @author	Cyril MAGUIRE
+ **/
 class pickyPasteInPluxml extends plxPlugin {
 
 	public $months = array(
@@ -62,6 +70,10 @@ class pickyPasteInPluxml extends plxPlugin {
 	# Activation / désactivation
 	public function OnActivate() {
 		if(version_compare(PHP_VERSION, PP_REQUIRED_PHP_VERSION) < 0) exit(sprintf($this->getLang('L_PHP_VERSION_TOO_LOW'), PP_REQUIRED_PHP_VERSION));
+		if (!is_file(PLX_ROOT.'data/configuration/plugins/pickypaste.site.css')) {
+			$css = file_get_contents(PLX_PLUGINS.'pickyPasteInPluxml/css/pickypaste.css');
+			plxUtils::write($css, PLX_ROOT.'data/configuration/plugins/pickyPasteInPluxml.site.css');
+		}
 	}
 	public function OnDeactivate() {
 		# code à exécuter à la désactivation du plugin
@@ -105,8 +117,11 @@ class pickyPasteInPluxml extends plxPlugin {
 		$string = <<<EOF
 
 		\$plxPlugin = \$this->plxPlugins->getInstance('pickyPasteInPluxml');
-
-		if(!empty(\$_POST)) {
+		if (!empty(\$_POST) && !isset(\$_POST['to']) && \$plxPlugin->getParam('cryptMyPluxml') == 1) {
+			\$this->plxPlugins->getInstance('cryptMyPluxml')->Prepend();
+			return true;
+		}
+		if(!empty(\$_POST) || (isset(\$_POST['to']) && \$plxPlugin->getParam('cryptMyPluxml') == 1) ) {
 
 		    if(!isset(\$_POST['randomkey'])) {\$plxPlugin->PP_msg('L_DECRYPTING_KEY_MISSING',true);}
 		    if(!isset(\$_POST['to'])) {
@@ -232,8 +247,11 @@ class pickyPasteInPluxml extends plxPlugin {
 		    } else {
 		        \$burnafterreading = '';
 		    }
-		    
-		    \$link = \$plxPlugin->PP_htmlspecialchars(\$zerobinServer).'?'.\$plxPlugin->PP_htmlspecialchars(\$result['id']).'#'.\$plxPlugin->PP_htmlspecialchars(\$_POST['randomkey']);
+		    if (\$plxPlugin->getParam('cryptMyPluxml') == 1) {
+		    	\$link = \$plxPlugin->PP_htmlspecialchars(\$this->urlRewrite('?zb/')).\$plxPlugin->PP_htmlspecialchars(\$result['id']).'#'.\$plxPlugin->PP_htmlspecialchars(\$_POST['randomkey']);
+		    } else {
+		    	\$link = \$plxPlugin->PP_htmlspecialchars(\$zerobinServer).'?'.\$plxPlugin->PP_htmlspecialchars(\$result['id']).'#'.\$plxPlugin->PP_htmlspecialchars(\$_POST['randomkey']);
+		    }
 
 		    \$reply = (\$from == \$plxPlugin->getLang('L_ANONYMOUS') || strpos(\$from, '@') === false ? '':
 		    			sprintf(\$plxPlugin->getLang('L_REPLY_TO'), 
@@ -284,7 +302,6 @@ EOF;
 	public function ThemeEndHead() {
 		echo '
 		<?php if($plxMotor->mode == "pickypaste") {?>
-			<link type="text/css" rel="stylesheet" href="'.PLX_PLUGINS.'pickyPasteInPluxml/css/pickypaste.css" />
 	        <meta charset="UTF-8">
 	        <script src="'.PLX_PLUGINS.'pickyPasteInPluxml/js/sjcl.js"></script>
 	        <script src="'.PLX_PLUGINS.'pickyPasteInPluxml/js/base64.js"></script>
