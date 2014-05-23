@@ -25,7 +25,7 @@
  *
  *   ################### CONFIG ####################################
 */
-	error_reporting(-1);
+	//error_reporting(-1);
 	mb_internal_encoding('UTF-8');
 
 	#### HAMMER TIME: Don't edit what's below except if you know what you're doing! #######
